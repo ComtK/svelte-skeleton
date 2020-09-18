@@ -7,6 +7,8 @@ import { terser } from "rollup-plugin-terser";
 //custom
 import autoPreprocess from "svelte-preprocess";
 import postcss from "rollup-plugin-postcss";
+import Purgecss from "@fullhuman/postcss-purgecss";
+import PurgeSvelte from "purgecss-from-svelte";
 
 const production = !process.env.ROLLUP_WATCH;
 
@@ -34,6 +36,16 @@ function serve() {
         },
     };
 }
+
+const purgeCss = Purgecss({
+    content: ["./src/**/*.svelte"],
+    extractors: [
+        {
+            extractor: PurgeSvelte,
+            extensions: ["svelte"],
+        },
+    ],
+});
 
 export default {
     input: "src/main.js",
@@ -94,7 +106,9 @@ export default {
         // instead of npm run dev), minify
         production && terser(),
 
-        postcss(),
+        postcss({
+            plugins: [purgeCss],
+        }),
     ],
     watch: {
         clearScreen: false,
