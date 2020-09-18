@@ -6,6 +6,7 @@ import { terser } from "rollup-plugin-terser";
 
 //custom
 import autoPreprocess from "svelte-preprocess";
+import postcss from "rollup-plugin-postcss";
 
 const production = !process.env.ROLLUP_WATCH;
 
@@ -51,7 +52,23 @@ export default {
             css: (css) => {
                 css.write("bundle.css");
             },
-            preprocess: autoPreprocess(),
+            preprocess: autoPreprocess({
+                babel: {
+                    presets: [
+                        [
+                            "@babel/preset-env",
+                            {
+                                loose: true,
+                                modules: false,
+                                targets: {
+                                    esmodules: true,
+                                },
+                            },
+                        ],
+                    ],
+                },
+                plugins: ["@babel/plugin-proposal-optional-chaining"],
+            }),
         }),
 
         // If you have external dependencies installed from
@@ -76,6 +93,8 @@ export default {
         // If we're building for production (npm run build
         // instead of npm run dev), minify
         production && terser(),
+
+        postcss(),
     ],
     watch: {
         clearScreen: false,
