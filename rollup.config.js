@@ -6,6 +6,9 @@ import { terser } from "rollup-plugin-terser";
 
 //custom
 import autoPreprocess from "svelte-preprocess";
+import postcss from "rollup-plugin-postcss";
+import Purgecss from "@fullhuman/postcss-purgecss";
+import PurgeSvelte from "purgecss-from-svelte";
 
 const production = !process.env.ROLLUP_WATCH;
 
@@ -34,6 +37,16 @@ function serve() {
     };
 }
 
+const purgeCss = Purgecss({
+    content: ["./src/**/*.svelte"],
+    extractors: [
+        {
+            extractor: PurgeSvelte,
+            extensions: ["svelte"],
+        },
+    ],
+});
+
 export default {
     input: "src/main.js",
     output: {
@@ -51,7 +64,23 @@ export default {
             css: (css) => {
                 css.write("bundle.css");
             },
-            preprocess: autoPreprocess(),
+            preprocess: autoPreprocess({
+                babel: {
+                    presets: [
+                        [
+                            "@babel/preset-env",
+                            {
+                                loose: true,
+                                modules: false,
+                                targets: {
+                                    esmodules: true,
+                                },
+                            },
+                        ],
+                    ],
+                },
+                plugins: ["@babel/plugin-proposal-optional-chaining"],
+            }),
         }),
 
         // If you have external dependencies installed from
@@ -76,6 +105,10 @@ export default {
         // If we're building for production (npm run build
         // instead of npm run dev), minify
         production && terser(),
+
+        postcss({
+            plugins: [purgeCss],
+        }),
     ],
     watch: {
         clearScreen: false,
